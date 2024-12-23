@@ -1,6 +1,6 @@
 #########################################################
 ##            Análisis de la Encuesta VAL-ED           ##
-## ----------------------------------------------------##                                                                  ##
+## ----------------------------------------------------##
 #########################################################
 
 #Instalamos los paquetes necesarios
@@ -15,6 +15,8 @@ install.packages("ggcorrplot")
 library(readxl)
 library(dplyr)
 library(ggplot2)
+
+
 
 #IMPORTAMOS LA BASE DE DATOS
 #================================
@@ -399,9 +401,6 @@ resultado_alpha <- alpha(base_directores)
 # Ver los resultados
 print(resultado_alpha)
 
-# Calcular el Alpha de Cronbach para el componente 1
-resultado_alpha_Direc_comp1 <- alpha(componente1)
-
 #REALIZAMOS UN ANÁLISIS FACTORIAL EXPLORATORIO PARA BASE DE DIRECTORES
 #==========================================================================
 
@@ -487,7 +486,7 @@ plot(fa(base_directores, nfactors=4, rotate = 'varimax',fm='minres'))
 fa.diagram(fa(base_directores, nfactors=4, rotate = 'varimax',fm='minres'))
 biplot(fa(base_directores,nfactors=4, rotate = 'varimax',fm='minres'),labels=rownames(base_directores))
 
-#### OBLIMIN (Rotacion & Factores correlacionados) : 2 Factores
+#### OBLIMIN (Rotacion & Factores correlacionados) : 4 Factores
 
 library(GPArotation)
 fa2 <-fa(base_directores, nfactors=4, rotate = 'oblimin')
@@ -517,8 +516,8 @@ fa.diagram(fa(base_directores, nfactors=4, rotate = 'oblimin',fm='minres'))
 biplot(fa(base_directores,nfactors=4, rotate = 'oblimin',fm='minres'),labels=rownames(base_directores))
 
 
-#ANÁLISIS FACTORIAL CONFIRMATORIO
-#====================================
+#1er. ANÁLISIS FACTORIAL CONFIRMATORIO
+#======================================
 
 install.packages("lavaan", dependencies = TRUE)
 install.packages("semPlot")
@@ -546,6 +545,13 @@ fitMeasures(AFC_f3, fit.measures = c("chisq", "df","srmr", "rmsea", "tli", "cfi"
 
 semPaths(AFC_f3, nCharNodes = 0,intercepts = FALSE, edge.label.cex=1.3, optimizeLatRes = T, groups = "lat",pastel = T, sizeInt=5,edge.color ="blue",esize = 5, label.prop=0,sizeLat = 11,"std",layout="circle3", exoVar = F)
 
+#Comentario: Al aplicar el análisis factorial exploratorio me arroja una estructura distinta a lo propuesto originalmente en el instrumento utilizado
+#Se procedera con realizar un AFC de acuerdo a la estructura propuesta por el instrumento
+
+#2do. ANÁLISIS FACTORIAL CONFIRMATORIO
+#======================================
+
+#AFC a nivel de componentes básicos:
 
 f4 <- ' factor5 =~P1 + P2 + P3 + P4 + P5 + P6+ P7 + P8 + P9 + P10 + P11 + P12 
 factor6 =~P13 + P14 + P15 +P16 + P17 + P18 + P19 + P20 + P21+ P22 + P23 + P24
@@ -560,6 +566,9 @@ fitMeasures(AFC_f4, fit.measures = c("chisq", "df","srmr", "rmsea", "tli", "cfi"
 
 semPaths(AFC_f4, nCharNodes = 0,intercepts = FALSE, edge.label.cex=1.3, optimizeLatRes = T, groups = "lat",pastel = T, sizeInt=5,edge.color ="blue",esize = 5, label.prop=0,sizeLat = 11,"std",layout="circle3", exoVar = F)
 
+#Comentario: Los indicadores de bondad de ajuste confirman la estructura original propuesta en el instrumento.
+
+#AFC a nivel de procesos claves:
 f5 <- ' proceso1 =~P1 + P2 + P13 + P14 + P25 + P26+ P37 + P38 
 proceso2 =~P3 + P4 + P15 +P16 + P27 + P28 + P39 + P40 
 proceso3 =~P5 + P6 + P17 + P18 + P29 + P30 + P41 + P42 
@@ -575,130 +584,6 @@ fitMeasures(AFC_f5, fit.measures = c("chisq", "df","srmr", "rmsea", "tli", "cfi"
 
 semPaths(AFC_f5, nCharNodes = 0,intercepts = FALSE, edge.label.cex=1.3, optimizeLatRes = T, groups = "lat",pastel = T, sizeInt=5,edge.color ="blue",esize = 5, label.prop=0,sizeLat = 11,"std",layout="circle3", exoVar = F)
 
-#MODELO DE RASCH
-#===================
+#Comentario: Los indicadores de bondad de ajuste no cumple con los valores esperados.
 
-# Instalar eRm si no está instalado
-if (!requireNamespace("eRm", quietly = TRUE)) {
-  install.packages("eRm")
-}
-
-# Cargar el paquete
-library(eRm)
-
-# Agrupar los ítems por factor
-factor5_items <- base_directores[, c("P1", "P2", "P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12")]
-factor6_items <- base_directores[, c("P13", "P14", "P15", "P16", "P17", "P18", "P19", "P20", "P21", "P22", "P23", "P24")]
-factor7_items <- base_directores[, c("P25", "P26", "P27", "P28", "P29", "P30", "P31", "P32", "P33", "P34", "P35", "P36")]
-factor8_items <- base_directores[, c("P37", "P38", "P39", "P40", "P41", "P42", "P43", "P44", "P45", "P46", "P47", "P48")]
-
-# Restar 1 a todas las respuestas en los ítems del factor 5
-factor5_items_shifted <- factor5_items - 1
-factor6_items_shifted <- factor6_items - 1
-factor7_items_shifted <- factor7_items - 1
-factor8_items_shifted <- factor8_items - 1
-
-# Ajustar el modelo de créditos parciales
-rasch_factor5 <- PCM(factor5_items_shifted)
-rasch_factor6 <- PCM(factor6_items_shifted)
-rasch_factor7 <- PCM(factor7_items_shifted)
-rasch_factor8 <- PCM(factor8_items_shifted)
-
-# Estadísticos del modelo para factor5
-summary(rasch_factor5)
-
-# Índice de Separación de Personas (ISP) para factor5
-person.parameter(rasch_factor5)
-
-# Repetir para los otros factores
-summary(rasch_factor6)
-summary(rasch_factor7)
-summary(rasch_factor8)
-
-# ISP para otros factores
-person.parameter(rasch_factor6)
-person.parameter(rasch_factor7)
-person.parameter(rasch_factor8)
-
-# Graficar curvas características para factor5
-plotICC(rasch_factor5)
-
-# Graficar habilidades de las personas para factor5
-plotPImap(rasch_factor5)
-
-# Repetir para los otros factores
-plotICC(rasch_factor6)
-plotICC(rasch_factor7)
-plotICC(rasch_factor8)
-
-# Graficar habilidades de las personas para factor6
-plotPImap(rasch_factor6)
-plotPImap(rasch_factor7)
-plotPImap(rasch_factor8)
-
-# Chi-cuadrado global
-summary(rasch_factor5)$global.test
-summary(rasch_factor6)$global.test
-summary(rasch_factor7)$global.test
-summary(rasch_factor8)$global.test
-
-# Recalcular residuos
-residuos_factor5 <- residuals(rasch_factor5)
-
-# Verificar los residuos
-summary(residuos_factor5)
-
-
-residuos_factor7 <- residuals(rasch_factor7)
-summary(residuos_factor7)
-
-# Calcular la media de los ítems para cada persona (directores) en cada factor
-base_directores$Factor5 <- rowMeans(factor5_items, na.rm = TRUE)
-base_directores$Factor6 <- rowMeans(factor6_items, na.rm = TRUE)
-base_directores$Factor7 <- rowMeans(factor7_items, na.rm = TRUE)
-base_directores$Factor8 <- rowMeans(factor8_items, na.rm = TRUE)
-
-# Crear un resumen con medias y desviaciones estándar por factor
-resultados_directores <- data.frame(
-  Factor = c("Factor5", "Factor6", "Factor7", "Factor8"),
-  Media = c(mean(base_directores$Factor5, na.rm = TRUE),
-            mean(base_directores$Factor6, na.rm = TRUE),
-            mean(base_directores$Factor7, na.rm = TRUE),
-            mean(base_directores$Factor8, na.rm = TRUE)),
-  DesviacionEstandar = c(sd(base_directores$Factor5, na.rm = TRUE),
-                         sd(base_directores$Factor6, na.rm = TRUE),
-                         sd(base_directores$Factor7, na.rm = TRUE),
-                         sd(base_directores$Factor8, na.rm = TRUE))
-)
-
-# Combinar media y desviación estándar en un solo campo
-resultados_directores$Media_DE <- paste0(
-  round(resultados_directores$Media, 2), 
-  " (", 
-  round(resultados_directores$DesviacionEstandar, 2), 
-  ")"
-)
-
-# Seleccionar solo las columnas relevantes
-resultados_final <- resultados_directores[, c("Factor", "Media_DE")]
-
-# Mostrar los resultados como una tabla básica
-print(resultados_final)
-
-install.packages("kableExtra")
-# Usar kable para una tabla más presentable (opcional)
-library(kableExtra)
-resultados_final %>%
-  kable(format = "html", caption = "Resultados de directores por factores") %>%
-  kable_styling(full_width = FALSE)
-
-#MODELO DE ESCALA DE CALIFICACIÓN RASCH
-#=======================================
-
-install.packages(c("readr", "TAM", "plyr", "WrightMap", "eRm"))
-
-library(readr) # For import the data
-library(TAM) # For running the Rating Scale Rasch Model
-library(plyr) # For plot the Item characteristic curves
-library(WrightMap)# For plot the variable map
-library(eRm) # For another example
+#Conclusión: Nos quedamos con la estructura inicial a nivel de componentes básicos.
